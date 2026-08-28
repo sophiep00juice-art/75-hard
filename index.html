@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="75 Hard">
+<meta name="theme-color" content="#EC3013">
+<title>Seventy-five Hard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,600;0,800;0,900;1,800&family=Instrument+Serif:ital@0;1&display=swap">
+</head>
+<body>
+<style>
+  :root{
+    --cream:#F5EDDD; --red:#EC3013; --green:#1F4630; --lime:#D9F24C; --ink:#201E1D; --ash:#7D7979;
+    --sat:env(safe-area-inset-top,0px);
+    --sab:env(safe-area-inset-bottom,0px);
+    --sal:env(safe-area-inset-left,0px);
+    --sar:env(safe-area-inset-right,0px);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    background:var(--ink);
+    font-family:Archivo,system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    color:var(--cream);
+    overscroll-behavior-y:none;
+  }
+  /* The device column: full screen on a phone, centered phone-width on desktop */
+  #app{
+    max-width:440px;
+    margin:0 auto;
+    min-height:100dvh;
+    background:var(--red);
+    position:relative;
+    overflow-x:hidden;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  @media (min-width:520px){
+    body{display:flex;align-items:center;justify-content:center;padding:24px 0;background:var(--cream)}
+    #app{min-height:min(880px,calc(100dvh - 48px));height:min(880px,calc(100dvh - 48px));border:3px solid var(--ink);box-shadow:14px 14px 0 rgba(32,30,29,0.9)}
+  }
+  textarea,button{font-family:inherit}
+  textarea:focus{border-color:var(--red)!important}
+  .tap{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
+  @media (hover:hover){
+    .task:hover{filter:brightness(1.07)}
+    .btn-red:hover{filter:brightness(0.92)}
+    .lime-hover:hover{background:var(--lime)!important;color:var(--green)!important}
+    .green-hover:hover{background:var(--green)!important}
+    .quiet:hover{color:var(--lime)!important}
+    .daycell:hover{background:var(--green)!important;color:var(--lime)!important}
+  }
+  .task:active{transform:scale(0.996)}
+  @keyframes stampIn{0%{transform:scale(1.5);opacity:0}60%{transform:scale(.95);opacity:1}100%{transform:scale(1);opacity:1}}
+  @keyframes riseIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+  @keyframes quoteIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes quoteOut{from{opacity:1}to{opacity:0}}
+  @media (prefers-reduced-motion:reduce){*{animation-duration:0.001ms!important;animation-iteration-count:1!important}}
+  ::selection{background:var(--lime);color:var(--ink)}
+  ::-webkit-scrollbar{width:0;height:0}
+</style>
+
+<div id="app"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- PWA install metadata (injected so the page can be added to a home screen) ---------- */
+  var ICON = "data:image/png;base64,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";
+  var ICON512 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAcqklEQVR4nO3dabRV5Zng8ffde59zLzPKvaAIMkegUCbnAUUEQSSiMjivrE61nc5QZaUty6rYSXVnqMpcldFVSZsyAWQSUIgMgoiIMg8BGUQmkUHgMshwOefs/b79QXsZ04IM99znnP38f5/EsHyerAv3f885e7/bHujVwgAA9AmkFwAAyCAAAKAUAQAApQgAAChFAABAKQIAAEoRAABQigAAgFIEAACUIgAAoFT0mb+jwbyl9bAHAKBu1Q64+vS/gVcAAKAUAQAApQgAAChFAABAKQIAAEoRAABQigAAgFIEAACUIgAAoBQBAAClCAAAKEUAAEApAgAAShEAAFCKAACAUgQAAJQiAACgFAEAAKUIAAAoRQAAQCkCAABKEQAAUCqqnzG1A66un0EAkAIN5i2thym8AgAApQgAAChFAABAKQIAAEoRAABQigAAgFIEAACUIgAAoBQBAAClCAAAKEUAAEApAgAAShEAAFCKAACAUgQAAJQiAACgFAEAAKUIAAAoRQAAQCkCAABKEQAAUIoAAIBSBAAAlCIAAKAUAQAApQgAAChFAABAKQIAAEoRAABQigAAgFIEAACUIgAAoBQBAAClCAAAKEUAAEApAgAAShEAAFCKAACAUgQAAJQiAACgFAEAAKUIAAAoRQAAQCkCAABKEQAAUIoAAIBSBAAAlCIAAKAUAQAApQgAAChFAABAKQIAAEoRAABQigAAgFIEAACUIgAAoBQBAAClCAAAKEUAAEApAgAAShEAAFCKAACAUgQAAJQiAACgFAEAAKUIAAAoRQAAQCkCAABKEQAAUIoAAIBSBAAAlCIAAKAUAQAApQgAAChFAABAKQIAAEoRAABQigAAgFIEAACUIgAAoBQBAAClCAAAKEUAAEApAgAAShEAAFCKAACAUgQAAJQiAACgFAEAAKUIAAAoRQAAQCkCAABKEQAAUIoAAIBSBAAAlCIAAKAUAQAApQgAAChFAABAKQIAAEoRAABQigAAgFIEAACUIgAAoBQBAAClCAAAKEUAAEApAgAAShEAAFCKAACAUgQAAJQiAACgFAEAAKUIAAAoRQAAQCkCAABKEQAAUIoAAIBSBAAAlCIAAKAUAQAApQgAAChFAABAKQIAAEoRAABQigAAgFIEAACU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";
+  function meta(name, content){ var m=document.createElement("meta"); m.name=name; m.content=content; document.head.appendChild(m); }
+  function metaProp(p, content){ var m=document.createElement("meta"); m.setAttribute("property",p); m.content=content; document.head.appendChild(m); }
+  (function pwaHead(){
+    // Full-bleed viewport that draws under the notch
+    var vp=document.querySelector('meta[name=viewport]');
+    if(!vp){vp=document.createElement("meta");vp.name="viewport";document.head.appendChild(vp);}
+    vp.content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1";
+    meta("apple-mobile-web-app-capable","yes");
+    meta("mobile-web-app-capable","yes");
+    meta("apple-mobile-web-app-status-bar-style","black-translucent");
+    meta("apple-mobile-web-app-title","75 Hard");
+    meta("theme-color","#EC3013");
+    var link=document.createElement("link"); link.rel="apple-touch-icon"; link.href=ICON; document.head.appendChild(link);
+    var fav=document.createElement("link"); fav.rel="icon"; fav.href=ICON; document.head.appendChild(fav);
+    try{
+      var manifest={ name:"Seventy-five Hard", short_name:"75 Hard", start_url:".", scope:".",
+        display:"standalone", background_color:"#EC3013", theme_color:"#EC3013",
+        icons:[{src:ICON,sizes:"180x180",type:"image/png"},{src:ICON512,sizes:"512x512",type:"image/png",purpose:"any maskable"}] };
+      var blob=new Blob([JSON.stringify(manifest)],{type:"application/manifest+json"});
+      var ml=document.createElement("link"); ml.rel="manifest"; ml.href=URL.createObjectURL(blob); document.head.appendChild(ml);
+    }catch(e){}
+  })();
+
+  /* ---------- content ---------- */
+  var CREAM="#F5EDDD", RED="#EC3013", GREEN="#1F4630", LIME="#D9F24C";
+
+  var TASKS=[
+    {label:"Progress photo", hint:"Same light, same spot"},
+    {label:"Follow the diet", hint:"No cheat meals"},
+    {label:"Workout one", hint:"45 minutes · anywhere"},
+    {label:"Workout two", hint:"45 minutes · outside, no matter what"},
+    {label:"One gallon of water", hint:"Plain water only"},
+    {label:"Read ten pages", hint:"Non-fiction · paper"}
+  ];
+  var VERSES=[
+    {text:"Get wisdom, get understanding: forget it not.", ref:"Proverbs 4:5", punch:"Six boxes. Zero excuses. Sleep, then do it again."},
+    {text:"Iron sharpeneth iron; so a man sharpeneth the countenance of his friend.", ref:"Proverbs 27:17", punch:"Today you were the iron. Tomorrow you're the edge."},
+    {text:"The soul of the diligent shall be made fat.", ref:"Proverbs 13:4", punch:"Diligence is boring. That is the entire trick."},
+    {text:"Commit thy works unto the LORD, and thy thoughts shall be established.", ref:"Proverbs 16:3", punch:"The plan held because you held it."},
+    {text:"A just man falleth seven times, and riseth up again.", ref:"Proverbs 24:16", punch:"Falling isn't the disqualifier. Staying down is."},
+    {text:"He that hath no rule over his own spirit is like a city broken down.", ref:"Proverbs 25:28", punch:"You laid wall today. Keep laying brick."},
+    {text:"Whatsoever thy hand findeth to do, do it with thy might.", ref:"Ecclesiastes 9:10", punch:"Might, not mood. Mood was never invited."}
+  ];
+  var OPENERS=[
+    {pre:"", hot:"Easy", post:" never pays well."},
+    {pre:"Nothing great is given, it's ", hot:"earned", post:"."},
+    {pre:"History forgets whiners, but remembers ", hot:"winners", post:"."},
+    {pre:"You are where you are ", hot:"because of you", post:"."},
+    {pre:"Nobody who you wanna be ", hot:"floats", post:" through the day."},
+    {pre:"All great things come with ", hot:"sacrifice", post:"."},
+    {pre:"The only thing relevant to your success is your ", hot:"actions", post:"."},
+    {pre:"You can't cut down a tree with a ", hot:"single swing", post:" of an axe."},
+    {pre:"", hot:"Big dreams", post:" don't cost any more than little ones."},
+    {pre:"Instead of thinking how hard your journey is, think how ", hot:"great your story", post:" will be."}
+  ];
+
+  /* ---------- persistent state ---------- */
+  var KEY="seventyfive.v1";
+  var DEFAULT={day:1, done:[false,false,false,false,false,false], resets:0, cleared:[], committed:false, diet:""};
+  var state=load();
+  state.screen="splash";
+  state.opener=Math.floor(Math.random()*OPENERS.length);
+  state.fading=false;
+  state.draft="";
+
+  function load(){
+    try{
+      var raw=localStorage.getItem(KEY);
+      if(!raw) return clone(DEFAULT);
+      var s=JSON.parse(raw); var d=clone(DEFAULT);
+      d.day=clamp(s.day,1,75); d.resets=s.resets||0; d.committed=!!s.committed; d.diet=s.diet||"";
+      d.cleared=Array.isArray(s.cleared)?s.cleared.filter(function(n){return n>=1&&n<=75}):[];
+      d.done=(Array.isArray(s.done)&&s.done.length===6)?s.done.map(Boolean):[false,false,false,false,false,false];
+      return d;
+    }catch(e){ return clone(DEFAULT); }
+  }
+  function save(){
+    try{
+      localStorage.setItem(KEY, JSON.stringify({
+        day:state.day, done:state.done, resets:state.resets,
+        cleared:state.cleared, committed:state.committed, diet:state.diet
+      }));
+    }catch(e){}
+  }
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+  function clamp(n,a,b){ n=parseInt(n,10); if(isNaN(n))return a; return Math.max(a,Math.min(b,n)); }
+
+  /* ---------- actions ---------- */
+  var splashT1, splashT2;
+  function armSplash(){
+    clearTimeout(splashT1); clearTimeout(splashT2);
+    splashT1=setTimeout(function(){ state.fading=true; render(); }, 3700);
+    splashT2=setTimeout(dismissSplash, 4200);
+  }
+  function dismissSplash(){
+    clearTimeout(splashT1); clearTimeout(splashT2);
+    if(state.screen!=="splash") return;
+    state.screen = state.committed ? "today" : "commit";
+    state.fading=false; render();
+  }
+  function replaySplash(){
+    clearTimeout(splashT1); clearTimeout(splashT2);
+    state.screen="splash"; state.fading=false;
+    state.opener=(state.opener + 1 + Math.floor(Math.random()*(OPENERS.length-1))) % OPENERS.length;
+    render(); armSplash();
+  }
+  function commitNow(){
+    var t=(state.draft||"").trim();
+    if(!t) return;
+    state.committed=true; state.diet=t; state.screen="today"; save(); render();
+  }
+  function toggle(i){
+    state.done[i]=!state.done[i];
+    if(state.done.every(Boolean)) state.screen="verse";
+    save(); render();
+  }
+  function nextDay(){
+    if(state.cleared.indexOf(state.day)===-1) state.cleared.push(state.day);
+    state.day=Math.min(75, state.day+1);
+    state.done=[false,false,false,false,false,false];
+    state.screen="today"; save(); render();
+  }
+  function hardReset(){
+    state.day=1; state.done=[false,false,false,false,false,false]; state.cleared=[];
+    state.resets=state.resets+1; state.screen="commit"; state.committed=false; state.diet=""; state.draft="";
+    save(); render();
+  }
+  function setDay(n){
+    state.day=n; var prior=[]; for(var i=1;i<n;i++) prior.push(i);
+    state.cleared=prior; state.done=[false,false,false,false,false,false];
+    save(); render();
+  }
+  function go(scr){ state.screen=scr; render(); }
+
+  /* ---------- helpers ---------- */
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  var TOPS = "max(44px, calc(var(--sat) + 30px))";      // standard screen top padding
+  var TOPT = "max(96px, calc(var(--sat) + 82px))";      // today screen (taller header clearance)
+  var BOT  = "calc(var(--sab) + 28px)";                  // sticky/bottom actions
+
+  /* ---------- screens ---------- */
+  function screenSplash(){
+    var q=OPENERS[state.opener];
+    var anim = state.fading ? "quoteOut .5s ease-in both" : "quoteIn .55s ease-out both";
+    return '<div class="tap" data-act="dismiss" style="min-height:100dvh;background:'+CREAM+';color:'+GREEN+';display:flex;flex-direction:column;justify-content:center;padding:'+TOPS+' 26px calc(var(--sab) + 40px);animation:'+anim+'">'+
+      '<div style="font:600 9px/1 ui-monospace,Menlo,monospace;letter-spacing:0.24em;text-transform:uppercase;color:'+RED+';margin-bottom:20px">75 Hard</div>'+
+      '<div style="font:800 40px/1.06 Archivo,sans-serif;letter-spacing:-0.03em;text-wrap:pretty;color:'+GREEN+'">'+esc(q.pre)+'<span style="background:'+RED+';color:'+CREAM+';padding:0 6px;-webkit-box-decoration-break:clone;box-decoration-break:clone">'+esc(q.hot)+'</span>'+esc(q.post)+'</div>'+
+      '<div style="font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:0.18em;text-transform:uppercase;color:'+GREEN+';opacity:0.55;margin-top:22px">Andy Frisella</div>'+
+    '</div>';
+  }
+
+  function screenCommit(){
+    var t=(state.draft||"").trim();
+    var btnBg=t?RED:"rgba(32,30,29,0.18)", btnFg=t?CREAM:"rgba(32,30,29,0.45)";
+    return '<div style="min-height:100dvh;background:'+CREAM+';color:'+GREEN+';display:flex;flex-direction:column;padding:'+TOPS+' 26px calc(var(--sab) + 34px);animation:quoteIn .45s ease-out both">'+
+      '<div style="font:600 9px/1 ui-monospace,Menlo,monospace;letter-spacing:0.24em;text-transform:uppercase;color:'+RED+'">Before day one</div>'+
+      '<div style="font:900 46px/0.92 Archivo,sans-serif;letter-spacing:-0.04em;text-transform:uppercase;margin-top:16px;color:'+GREEN+'">Name<br>your diet.</div>'+
+      '<div style="font:italic 400 22px/1.22 \'Instrument Serif\',Georgia,serif;margin-top:16px;text-wrap:pretty;color:'+GREEN+'">Write the rules you are agreeing to. Once you commit, they lock for all 75 days.</div>'+
+      '<textarea id="draft" rows="5" placeholder="e.g. Whole foods only. No sugar, no bread, no eating after 8pm." style="margin-top:22px;width:100%;resize:none;background:transparent;border:3px solid '+GREEN+';padding:14px;font:600 16px/1.4 Archivo,sans-serif;color:'+GREEN+';outline:none">'+esc(state.draft)+'</textarea>'+
+      '<div style="font:600 10px/1.5 ui-monospace,Menlo,monospace;letter-spacing:0.12em;text-transform:uppercase;color:#7D7979;margin-top:10px">No edits until you finish or fail. Keep your word.</div>'+
+      '<div style="flex:1;min-height:16px"></div>'+
+      '<div class="tap btn-red" data-act="commit" style="padding:22px;font:900 18px/1 Archivo,sans-serif;letter-spacing:0.04em;text-transform:uppercase;text-align:center;background:'+btnBg+';color:'+btnFg+'">I\'m committed</div>'+
+    '</div>';
+  }
+
+  function screenSettings(){
+    var picks="";
+    for(var n=1;n<=75;n++){
+      var on=n===state.day;
+      picks+='<div class="tap daycell" data-act="setday" data-n="'+n+'" style="aspect-ratio:1;border:3px solid '+CREAM+';display:flex;align-items:center;justify-content:center;font:900 17px/1 Archivo,sans-serif;background:'+(on?LIME:"transparent")+';color:'+(on?GREEN:CREAM)+'">'+pad2(n)+'</div>';
+    }
+    return '<div style="min-height:100dvh;display:flex;flex-direction:column;background:'+RED+'">'+
+      '<div style="padding:'+TOPS+' 20px 18px;border-bottom:3px solid '+CREAM+';display:flex;align-items:center;justify-content:space-between;gap:12px">'+
+        '<div style="font:900 44px/0.9 Archivo,sans-serif;letter-spacing:-0.04em;text-transform:uppercase">Settings</div>'+
+        '<div class="tap lime-hover" data-act="today" style="font:800 12px/1 Archivo,sans-serif;letter-spacing:0.1em;text-transform:uppercase;color:'+RED+';background:'+CREAM+';padding:12px 14px;flex:none">Done</div>'+
+      '</div>'+
+      '<div style="padding:20px 20px 22px;border-bottom:2px solid rgba(245,237,221,0.42)">'+
+        '<div style="font:600 9px/1 ui-monospace,Menlo,monospace;letter-spacing:0.2em;text-transform:uppercase;color:'+LIME+'">What day are you on?</div>'+
+        '<div style="font:italic 400 21px/1.2 \'Instrument Serif\',Georgia,serif;margin:8px 0 14px">Started before the app? Pick the day you are actually on. Everything before it counts as done.</div>'+
+        '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px;max-height:214px;overflow-y:auto;padding-right:4px">'+picks+'</div>'+
+      '</div>'+
+      '<div style="padding:20px 20px 30px">'+
+        '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">'+
+          '<div style="font:600 9px/1 ui-monospace,Menlo,monospace;letter-spacing:0.2em;text-transform:uppercase;color:'+LIME+'">Your diet &#183; locked</div>'+
+          '<div style="font:600 9px/1 ui-monospace,Menlo,monospace;letter-spacing:0.14em;text-transform:uppercase;color:rgba(245,237,221,0.6)">Day '+state.day+' of 75</div>'+
+        '</div>'+
+        '<div style="margin-top:12px;border:3px solid rgba(245,237,221,0.4);padding:14px;font:600 16px/1.4 Archivo,sans-serif;color:rgba(245,237,221,0.75);background:rgba(31,70,48,0.35);white-space:pre-wrap">'+esc(state.diet||"No diet set yet.")+'</div>'+
+        '<div style="font:600 10px/1.5 ui-monospace,Menlo,monospace;letter-spacing:0.12em;text-transform:uppercase;color:rgba(245,237,221,0.6);margin-top:10px">Unlocks when you finish the 75 or start over.</div>'+
+      '</div>'+
+    '</div>';
+  }
+
+  function screenToday(){
+    var doneCount=state.done.filter(Boolean).length;
+    var left=6-doneCount;
+    var pips="";
+    for(var i=0;i<6;i++) pips+='<div style="flex:1;height:9px;background:'+(state.done[i]?LIME:"rgba(245,237,221,0.32)")+'"></div>';
+    var rows="";
+    for(var j=0;j<TASKS.length;j++){
+      var on=state.done[j];
+      rows+='<div class="tap task" data-act="toggle" data-i="'+j+'" style="display:flex;align-items:center;gap:14px;padding:0 20px;height:78px;border-bottom:2px solid rgba(245,237,221,0.28);background:'+(on?GREEN:"transparent")+'">'+
+        '<div style="width:27px;height:27px;flex:none;border:3px solid '+(on?LIME:CREAM)+';background:'+(on?LIME:"transparent")+';display:flex;align-items:center;justify-content:center;font:900 15px/1 Archivo,sans-serif;color:'+GREEN+'">'+(on?"✕":"")+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font:800 20px/1.05 Archivo,sans-serif;letter-spacing:-0.02em;text-transform:uppercase;color:'+(on?LIME:CREAM)+';text-decoration:'+(on?"line-through":"none")+';text-decoration-thickness:3px">'+esc(TASKS[j].label)+'</div>'+
+          '<div style="font:600 10px/1.3 ui-monospace,Menlo,monospace;letter-spacing:0.1em;text-transform:uppercase;color:'+(on?"rgba(217,242,76,0.65)":"rgba(245,237,221,0.65)")+';margin-top:4px">'+esc(TASKS[j].hint)+'</div>'+
+        '</div>'+
+        '<div style="font:900 12px/1 Archivo,sans-serif;color:'+(on?"rgba(217,242,76,0.65)":"rgba(245,237,221,0.65)")+'">'+pad2(j+1)+'</div>'+
+      '</div>';
+    }
+    return '<div style="display:flex;flex-direction:column;min-height:100dvh;background:'+RED+'">'+
+      '<div style="padding:'+TOPT+' 20px 0;display:flex;align-items:center;justify-content:space-between">'+
+        '<div class="tap quiet" data-act="replay" style="font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:0.18em;text-transform:uppercase;color:rgba(245,237,221,0.72);padding:6px 0">Today &#183; new quote</div>'+
+        '<div class="tap" data-act="grid" style="display:flex;flex-direction:column;gap:3px;padding:8px">'+
+          '<div style="width:22px;height:3px;background:'+CREAM+'"></div><div style="width:22px;height:3px;background:'+LIME+'"></div><div style="width:22px;height:3px;background:'+CREAM+'"></div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:4px 20px 16px">'+
+        '<div style="display:flex;align-items:flex-end;gap:10px">'+
+          '<div style="font:800 13px/1 Archivo,sans-serif;letter-spacing:0.16em;text-transform:uppercase;padding-bottom:15px">Day</div>'+
+          '<div style="font:900 112px/0.78 Archivo,sans-serif;letter-spacing:-0.06em">'+state.day+'</div>'+
+          '<div style="font:600 12px/1 ui-monospace,Menlo,monospace;color:rgba(245,237,221,0.72);padding-bottom:17px">/ 75</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:3px;margin-top:12px">'+pips+'</div>'+
+        '<div style="display:flex;justify-content:space-between;margin-top:7px;font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:0.12em;text-transform:uppercase;color:rgba(245,237,221,0.72)"><span>'+doneCount+' of 6 logged</span><span>'+(left===0?"day cleared":left+" to go")+'</span></div>'+
+      '</div>'+
+      '<div style="padding:16px 20px 18px;border-top:2px solid rgba(245,237,221,0.42);border-bottom:2px solid rgba(245,237,221,0.42)">'+
+        '<div style="font:600 9px/1 ui-monospace,Menlo,monospace;letter-spacing:0.2em;text-transform:uppercase;color:'+LIME+';margin-bottom:8px">Mission</div>'+
+        '<div style="font:italic 400 27px/1.18 \'Instrument Serif\',Georgia,serif;text-wrap:pretty">Faithfully stewarding the gifts and relationships God entrusts to me.</div>'+
+      '</div>'+
+      '<div style="flex:1">'+rows+'</div>'+
+      '<div style="position:sticky;bottom:0;display:grid;grid-template-columns:1fr 1fr;border-top:3px solid '+CREAM+';background:'+RED+'">'+
+        '<div class="tap green-hover" data-act="grid" style="padding:20px 20px '+BOT+';font:800 14px/1 Archivo,sans-serif;letter-spacing:0.06em;text-transform:uppercase;border-right:3px solid '+CREAM+';color:'+CREAM+'">All 75 days</div>'+
+        '<div class="tap lime-hover" data-act="fail" style="padding:20px 20px '+BOT+';font:800 14px/1 Archivo,sans-serif;letter-spacing:0.06em;text-transform:uppercase;background:'+CREAM+';color:'+RED+'">I missed one</div>'+
+      '</div>'+
+    '</div>';
+  }
+
+  function screenGrid(){
+    var tiles="";
+    for(var n=1;n<=75;n++){
+      var isCleared=state.cleared.indexOf(n)!==-1;
+      var isNow=n===state.day;
+      var bg=isCleared?CREAM:(isNow?LIME:"transparent");
+      var border=isNow?LIME:CREAM;
+      var fg=isCleared?RED:(isNow?GREEN:CREAM);
+      tiles+='<div style="position:relative;aspect-ratio:1;background:'+bg+';border:3px solid '+border+';display:flex;align-items:center;justify-content:center;overflow:hidden">'+
+        '<div style="font:900 18px/1 Archivo,sans-serif;color:'+fg+'">'+pad2(n)+'</div>'+
+        (isCleared?'<div style="position:absolute;left:-14%;top:calc(50% - 2px);width:128%;height:4px;background:'+RED+';transform:rotate(-32deg)"></div>':'')+
+      '</div>';
+    }
+    return '<div style="display:flex;flex-direction:column;min-height:100dvh;background:'+RED+'">'+
+      '<div style="padding:'+TOPS+' 20px 18px;border-bottom:3px solid '+CREAM+'">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">'+
+          '<div style="font:900 44px/0.9 Archivo,sans-serif;letter-spacing:-0.04em;text-transform:uppercase">All 75</div>'+
+          '<div class="tap lime-hover" data-act="today" style="font:800 12px/1 Archivo,sans-serif;letter-spacing:0.1em;text-transform:uppercase;color:'+RED+';background:'+CREAM+';padding:12px 14px;flex:none">Back to day '+state.day+'</div>'+
+        '</div>'+
+        '<div style="display:flex;margin-top:16px;border:3px solid '+CREAM+'">'+
+          '<div style="flex:1;padding:10px 12px;border-right:3px solid '+CREAM+'"><div style="font:900 30px/1 Archivo,sans-serif">'+state.cleared.length+'</div><div style="font:600 9px/1 ui-monospace,Menlo,monospace;letter-spacing:0.14em;text-transform:uppercase;color:rgba(245,237,221,0.75);margin-top:5px">Crossed off</div></div>'+
+          '<div style="flex:1;padding:10px 12px;border-right:3px solid '+CREAM+';background:'+LIME+';color:'+GREEN+'"><div style="font:900 30px/1 Archivo,sans-serif">'+(75-state.cleared.length)+'</div><div style="font:600 9px/1 ui-monospace,Menlo,monospace;letter-spacing:0.14em;text-transform:uppercase;margin-top:5px">Left</div></div>'+
+          '<div style="flex:1;padding:10px 12px;background:'+GREEN+'"><div style="font:900 30px/1 Archivo,sans-serif;color:'+LIME+'">'+state.resets+'</div><div style="font:600 9px/1 ui-monospace,Menlo,monospace;letter-spacing:0.14em;text-transform:uppercase;color:rgba(245,237,221,0.75);margin-top:5px">Restarts</div></div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="flex:1;padding:18px 20px 24px;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;align-content:start">'+tiles+'</div>'+
+      '<div style="border-top:2px solid rgba(245,237,221,0.42);padding:16px 20px 18px;font:italic 400 20px/1.25 \'Instrument Serif\',Georgia,serif;color:'+CREAM+'">One miss and the grid empties. That is the whole deal.</div>'+
+      '<div class="tap lime-hover" data-act="settings" style="border-top:3px solid '+CREAM+';padding:20px 20px '+BOT+';font:800 14px/1 Archivo,sans-serif;letter-spacing:0.06em;text-transform:uppercase;background:'+CREAM+';color:'+RED+'">Settings &#183; day &amp; diet</div>'+
+    '</div>';
+  }
+
+  function screenVerse(){
+    var v=VERSES[(state.day-1)%VERSES.length];
+    var nextNum=Math.min(75, state.day+1);
+    return '<div style="min-height:100dvh;background:'+GREEN+';display:flex;flex-direction:column;padding:'+TOPS+' 22px calc(var(--sab) + 30px)">'+
+      '<div style="align-self:flex-start;background:'+LIME+';color:'+GREEN+';font:900 12px/1 Archivo,sans-serif;letter-spacing:0.16em;text-transform:uppercase;white-space:nowrap;padding:9px 12px;animation:stampIn .4s cubic-bezier(.2,1.4,.4,1) both">Day '+state.day+' &#183; cleared</div>'+
+      '<div style="font:900 78px/0.82 Archivo,sans-serif;letter-spacing:-0.05em;text-transform:uppercase;margin-top:22px;animation:riseIn .4s .08s both">All<br>six<br><span style="color:'+LIME+'">done.</span></div>'+
+      '<div style="height:3px;background:'+RED+';margin:24px 0 20px"></div>'+
+      '<div style="font:italic 400 30px/1.18 \'Instrument Serif\',Georgia,serif;text-wrap:pretty;animation:riseIn .4s .16s both">“'+esc(v.text)+'”</div>'+
+      '<div style="font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:0.16em;text-transform:uppercase;color:'+LIME+';margin-top:14px">'+esc(v.ref)+'</div>'+
+      '<div style="font:800 17px/1.3 Archivo,sans-serif;color:'+CREAM+';margin-top:24px;text-wrap:pretty">'+esc(v.punch)+'</div>'+
+      '<div style="flex:1;min-height:20px"></div>'+
+      '<div class="tap lime-hover" data-act="nextday" style="background:'+RED+';color:'+CREAM+';padding:22px;font:900 18px/1 Archivo,sans-serif;letter-spacing:0.04em;text-transform:uppercase;text-align:center">Lock it &#8594; day '+nextNum+'</div>'+
+      '<div class="tap quiet" data-act="grid" style="padding:14px 0 0;font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:0.14em;text-transform:uppercase;color:rgba(245,237,221,0.6);text-align:center">See the grid</div>'+
+    '</div>';
+  }
+
+  function screenFail(){
+    return '<div style="min-height:100dvh;background:'+RED+';display:flex;flex-direction:column;padding:'+TOPS+' 22px calc(var(--sab) + 30px)">'+
+      '<div style="font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:0.2em;text-transform:uppercase;color:rgba(245,237,221,0.85)">Day '+state.day+' broke the rules</div>'+
+      '<div style="flex:1;display:flex;flex-direction:column;justify-content:center">'+
+        '<div style="font:900 100px/0.8 Archivo,sans-serif;letter-spacing:-0.06em;text-transform:uppercase;animation:riseIn .35s both">Day 1.</div>'+
+        '<div style="font:900 100px/0.8 Archivo,sans-serif;letter-spacing:-0.06em;text-transform:uppercase;color:'+GREEN+';animation:riseIn .35s .1s both">Again.</div>'+
+        '<div style="height:3px;background:'+CREAM+';margin:24px 0 18px;width:58%"></div>'+
+        '<div style="font:italic 400 24px/1.2 \'Instrument Serif\',Georgia,serif;max-width:310px;text-wrap:pretty">No substitutions, no half days. The count goes back to zero, and so do you.</div>'+
+      '</div>'+
+      '<div class="tap lime-hover" data-act="reset" style="background:'+GREEN+';color:'+CREAM+';padding:22px;font:900 18px/1 Archivo,sans-serif;letter-spacing:0.04em;text-transform:uppercase;text-align:center">Start over</div>'+
+      '<div class="tap" data-act="today" style="padding:14px 0 0;font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:0.14em;text-transform:uppercase;color:rgba(245,237,221,0.75);text-align:center">Wait &#8212; I did it</div>'+
+    '</div>';
+  }
+
+  /* ---------- render + events ---------- */
+  var app=document.getElementById("app");
+  function render(){
+    var scr=state.screen, html;
+    if(scr==="splash") html=screenSplash();
+    else if(scr==="commit") html=screenCommit();
+    else if(scr==="settings") html=screenSettings();
+    else if(scr==="grid") html=screenGrid();
+    else if(scr==="verse") html=screenVerse();
+    else if(scr==="fail") html=screenFail();
+    else html=screenToday();
+    app.innerHTML=html;
+    if(scr!=="today" && scr!=="grid") app.scrollTop=0;
+    var ta=document.getElementById("draft");
+    if(ta){
+      ta.addEventListener("input", function(){ state.draft=ta.value; var btn=app.querySelector('[data-act=commit]'); if(btn){ var t=ta.value.trim(); btn.style.background=t?RED:"rgba(32,30,29,0.18)"; btn.style.color=t?CREAM:"rgba(32,30,29,0.45)"; } });
+    }
+  }
+
+  app.addEventListener("click", function(e){
+    var el=e.target.closest("[data-act]"); if(!el) return;
+    var act=el.getAttribute("data-act");
+    if(act==="dismiss") return dismissSplash();
+    if(act==="commit") return commitNow();
+    if(act==="toggle") return toggle(parseInt(el.getAttribute("data-i"),10));
+    if(act==="grid") return go("grid");
+    if(act==="today") return go("today");
+    if(act==="settings") return go("settings");
+    if(act==="fail") return go("fail");
+    if(act==="replay") return replaySplash();
+    if(act==="nextday") return nextDay();
+    if(act==="reset") return hardReset();
+    if(act==="setday") return setDay(parseInt(el.getAttribute("data-n"),10));
+  });
+
+  render();
+  armSplash();
+})();
+</script>
+</body>
+</html>
